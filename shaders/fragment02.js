@@ -8,5 +8,8 @@ varying vec2 vUV;
 varying vec3 vPosition;
 void main() {
   //play here for colour
-  gl_FragColor = vec4(vPosition.zzz * .5 + .5, 1.0);
+  vec3 colorPortion = vec3(0.945, 0.580, 0.513) * 0.5;
+  vec3 depthPortion = vPosition.zzz * .5;
+
+  gl_FragColor = vec4(colorPortion + depthPortion, 1.0);
 }`

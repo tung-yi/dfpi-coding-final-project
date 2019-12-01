@@ -9,7 +9,7 @@ var mat4 = glm.mat4
 
 const io = require('socket.io-client')
 
-// PUT YOUR IP HERE TOO
+// Put IP address here to connect to server
 const socket = io('http://192.168.0.16:9876')
 
 socket.on('cameramove', function (objReceived) {
@@ -49,7 +49,7 @@ mat4.lookAt(viewMatrix, eye, center, up)
 
 var clear = () => {
   regl.clear({
-    color: [.9, .9, .9, 1] // white
+    color: [.125, .376, .309, 1] // white
   })
 }
 
@@ -74,7 +74,8 @@ function map (value, start, end, newStart, newEnd) {
   return newValue
 }
 //generate a new seed 'new fold'
-window.addEventListener('click', function (event) {
+//listens to server for the 'click' control sent from the remote
+socket.on('click', function (event) {
 if (targetFoldingValue == 0.0){ 
   targetFoldingValue= 1.0
   seed = Math.random () * 1000
@@ -126,7 +127,13 @@ loadObj('./assets/plane1.obj', function (obj) {
   })
 })
 
-function render () {
+//function render () {
+
+  regl.frame(({time}) => {
+    regl.clear({
+      color: [1, 1, 1, 1]
+    })
+    
   currTime += 0.01
 
   //increase the folding strength each fold
@@ -134,8 +141,6 @@ function render () {
 
   // clear the background
   clear()
-
-
 
   // 3d model takes time to load, therefore check if drawCube is exist first before calling it
   if (drawCube !== undefined) {
@@ -156,6 +161,4 @@ function render () {
 
   // make it loop
   window.requestAnimationFrame(render)
-}
-
-render()
+})

@@ -115,7 +115,7 @@ void main() {
 
 // this is where adjustments to the shape of the "paper" can be "folded" PLAY HERE
 
-  float noiseScale = 0.5;
+  float noiseScale = 0.6;
   float noiseX = cnoise(pos.xyz * noiseScale + uSeed); 
   float noiseY = cnoise(pos.yzx * noiseScale + uSeed);
   float noiseZ = cnoise(pos.zxy * noiseScale + uSeed);
