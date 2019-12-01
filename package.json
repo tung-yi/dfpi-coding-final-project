@@ -14,7 +14,7 @@
   },
   "devDependencies": {},
   "scripts": {
-    "start1": "budo 1_finalProject.js --live -- -t babelify"
+    "frontend": "budo frontend.js --live -- -t babelify"
   },
   "author": "",
   "license": "ISC"
