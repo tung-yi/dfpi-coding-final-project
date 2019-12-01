@@ -6,23 +6,48 @@ const GL = alfrid.GL
 // PUT YOUR OWN IP HERE
 const socket = io('http://192.168.0.16:9876')
 
-const canvas = document.createElement('canvas')
-document.body.appendChild(canvas)
-canvas.style.position = 'fixed'
-canvas.style.margin = 0
-canvas.style.padding = 0
-canvas.style.top = 0
-canvas.style.left = 0
+const widthOverHeight = window.innerWidth / window.innerHeight
+const paperPortion = Math.ceil(100 * widthOverHeight)
+const rotatePortion = Math.floor(100 - paperPortion);
+console.log("paperPortion", paperPortion);
+console.log("rotatePortion", rotatePortion);
 
-GL.init(canvas, { alpha: false })
+const paperView = document.createElement('div')
+document.body.appendChild(paperView)
+paperView.style.position = 'fixed'
+paperView.style.margin = 0
+paperView.style.padding = 0
+paperView.style.height = paperPortion + "%";
+paperView.style.width = "100%";
+paperView.style.top = 0
+paperView.style.left = 0
+paperView.style.backgroundColor = '#ff3333';
+
+const rotateView = document.createElement('canvas')
+document.body.appendChild(rotateView)
+rotateView.style.position = 'fixed'
+rotateView.style.margin = 0
+rotateView.style.padding = 0
+rotateView.style.height = rotatePortion + "%";
+rotateView.style.width = "100%";
+rotateView.style.bottom = 0
+rotateView.style.left = 0
+
+GL.init(rotateView, { alpha: false })
+
+function getAspectRatio() {
+  return window.innerWidth / (window.innerHeight * (1 - widthOverHeight));
+}
 
 const camera = new alfrid.CameraPerspective()
-camera.setPerspective(45 * Math.PI / 180, GL.aspectRatio, 0.01, 1000)
-const orbitalControl = new alfrid.OrbitalControl(camera, window, 5)
+//changing the camera perspective, Using Alfrid's predetermined aspect ratio format, this is redefining the expected dimensions.
+camera.setPerspective(45 * Math.PI / 180, getAspectRatio(), 0.01, 1000)
+//this ensures that the rotation occurs when you're pressing in the right portion of the screen
+const orbitalControl = new alfrid.OrbitalControl(camera, rotateView, 5)
 orbitalControl.rx.value = orbitalControl.ry.value = 0.3
 
 // mouse position
-window.addEventListener('mousemove', (e) => {
+rotateView.addEventListener('mousemove', (e) => {
   const mouseX = e.clientX / window.innerWidth
   const mouseY = e.clientY / window.innerHeight
 
@@ -33,7 +58,7 @@ window.addEventListener('mousemove', (e) => {
 })
 
 // mouse position
-window.addEventListener('click', (e) => {
+paperView.addEventListener('click', (e) => {
   const mouseX = e.clientX / window.innerWidth
   const mouseY = e.clientY / window.innerHeight
 
@@ -87,12 +112,7 @@ function render () {
 
 alfrid.Scheduler.addEF(render)
 
-window.addEventListener('resize', () => {
-  GL.setSize(window.innerWidth, window.innerHeight)
-  camera.setAspectRatio(GL.aspectRatio)
-})
-
-window.addEventListener('touchmove', (e) => {
+rotateView.addEventListener('touchmove', (e) => {
   console.log(e.touches.length)
   if (e.touches.length > 1) {
     e.preventDefault()
