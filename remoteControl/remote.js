@@ -60,15 +60,13 @@ rotateView.addEventListener('mousemove', (e) => {
 // mouse position
 paperView.addEventListener('click', (e) => {
   const mouseX = e.clientX / window.innerWidth
-  const mouseY = e.clientY / window.innerHeight
+  //mouseY constant is relative to the width of the remote window since the "click" space is a square
+  const mouseY = e.clientY / window.innerWidth 
 
   socket.emit('click', {
     x: mouseX,
     y: mouseY
-  })
-  // need :
-  // 1 condition
-  // 2 position of the click - position of the 
+  }) 
 })
 
 const bAxis = new alfrid.BatchAxis()

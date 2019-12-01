@@ -130,7 +130,7 @@ void main() {
 
   // add the translate to the position
   pos += vec3(noiseX, noiseY, noiseZ) * uFoldingStrength;
-  pos.z -= distToTouch * 0.2 * uFoldingStrength;
+  pos.z += distToTouch * 0.25 * uFoldingStrength;
  
   vPosition = pos;
 

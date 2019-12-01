@@ -47,6 +47,10 @@ var center = [0, 0, 0]
 var up = [0, 1, 0]
 mat4.lookAt(viewMatrix, eye, center, up)
 
+//storing 'click' information (mouse x & mouse y)
+var clickedX = 0;
+var clickedY = 0;
+
 var clear = () => {
   regl.clear({
     color: [.125, .376, .309, 1] // white
@@ -76,13 +80,16 @@ function map (value, start, end, newStart, newEnd) {
 //generate a new seed 'new fold'
 //listens to server for the 'click' control sent from the remote
 socket.on('click', function (event) {
-if (targetFoldingValue == 0.0){ 
-  targetFoldingValue= 1.0
-  seed = Math.random () * 1000
-} else {
-  targetFoldingValue = 0.0
-}
-  console.log('New seed :', seed)
+  console.log(event)
+  if (targetFoldingValue == 0.0){ 
+    targetFoldingValue= 1.0
+    seed = Math.random () * 1000
+    clickedX = map (event.x, 0, 1, -2, 2) 
+    clickedY = map (event.y, 0, 1, 2, -2)
+  } else {
+    targetFoldingValue = 0.0
+  }
+    console.log('New seed :', seed)
 })
 
 // create event listener for mouse move event in order to get mouse position
@@ -150,7 +157,7 @@ loadObj('./assets/plane1.obj', function (obj) {
       projection: projectionMatrix,
       view: viewMatrix,
       translate: [0, 0, 0],
-      touch: [0, 0, 0],
+      touch: [clickedX, clickedY, 0],
       seed: seed,
       foldingStrength: foldingStrength
     }
@@ -158,7 +165,4 @@ loadObj('./assets/plane1.obj', function (obj) {
     // draw the cube, don't forget the pass the obj in for uniform
     drawCube(obj)
   }
-
-  // make it loop
-  window.requestAnimationFrame(render)
 })
