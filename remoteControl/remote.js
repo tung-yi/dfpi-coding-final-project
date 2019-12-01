@@ -6,6 +6,8 @@ const GL = alfrid.GL
 // PUT YOUR OWN IP HERE
 const socket = io('http://192.168.0.16:9876')
 
+var clicked = false 
+
 const widthOverHeight = window.innerWidth / window.innerHeight
 const paperPortion = Math.ceil(100 * widthOverHeight)
 const rotatePortion = Math.floor(100 - paperPortion);
@@ -21,7 +23,7 @@ paperView.style.height = paperPortion + "%";
 paperView.style.width = "100%";
 paperView.style.top = 0
 paperView.style.left = 0
-paperView.style.backgroundColor = '#ff3333';
+paperView.style.background = '#ff3333';
 
 const rotateView = document.createElement('canvas')
 document.body.appendChild(rotateView)
@@ -59,9 +61,17 @@ rotateView.addEventListener('mousemove', (e) => {
 
 // mouse position
 paperView.addEventListener('click', (e) => {
+  clicked = !clicked
   const mouseX = e.clientX / window.innerWidth
   //mouseY constant is relative to the width of the remote window since the "click" space is a square
   const mouseY = e.clientY / window.innerWidth 
+  if (clicked){
+    paperView.style.background = `radial-gradient(farthest-corner at ${e.clientX}px ${e.clientY}px, #f35 0%, #43e 100%)`;
+  } else {
+    paperView.style.background = '#ff3333';
+  }
+
+  
 
   socket.emit('click', {
     x: mouseX,
