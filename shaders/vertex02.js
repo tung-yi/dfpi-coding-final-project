@@ -1,6 +1,4 @@
 // module.exports is the preserved word for exporting
-// copy & paste the vertex shader from javascript file
-
 module.exports = `
 precision mediump float;
 attribute vec3 aPosition;
@@ -11,7 +9,10 @@ uniform mat4 uProjectionMatrix;
 uniform mat4 uViewMatrix;
 uniform vec3 uTouch;
 
+//these two new uniforms have been create to be able to 'fold' the paper
+//the uSeed uniform allows for random 'folds' to be generate each time it is clicked as defined in the frontend
 uniform float uSeed;
+//the uFoldingStrength uniform determines for the 'crispness' of the fold 
 uniform float uFoldingStrength;
 
 // setup the uniform for time
@@ -113,17 +114,15 @@ float map(float value, float start, float end, float newStart, float newEnd) {
 void main() {
   vec3 pos = aPosition;
 
-// this is where adjustments to the shape of the "paper" can be "folded" PLAY HERE
-
+// this is where adjustments to the shape of the "paper" can be "folded"
   float noiseScale = 0.6;
-  float noiseX = cnoise(pos.xyz * noiseScale + uSeed); 
-  float noiseY = cnoise(pos.yzx * noiseScale + uSeed);
-  float noiseZ = cnoise(pos.zxy * noiseScale + uSeed);
+  float noiseX = cnoise(pos.xyz * (noiseScale * 1.2) + uSeed); 
+  float noiseY = cnoise(pos.yzx * (noiseScale * 1.2) + uSeed);
+  float noiseZ = cnoise(pos.zxy * (noiseScale * 2.5) + uSeed);
   
-//help determine 'sharpness' of fold PLAY HERE
-  noiseZ = map(noiseZ, -1.0, 1.0, 0.0, 1.0); 
+//help determine 'sharpness' of fold 
+  noiseZ = map(noiseZ, -1.0, 4.0, 0.0, 1.5); 
   noiseZ = smoothstep(0.5, 1.5, noiseZ); 
-
 
   //determines the distance between the grid vectors to where the user touches the screen
   float distToTouch = distance(uTouch, pos);

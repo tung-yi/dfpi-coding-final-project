@@ -1,27 +1,19 @@
-// ********************************
-// I'm cleaning some of the comments as it start getting messy.
-// If there's any confusing points please go back to previous files for the comments
-// ********************************
-
 var regl = require('regl')()
 var glm = require('gl-matrix')
 var mat4 = glm.mat4
 
 const io = require('socket.io-client')
 
-// Put IP address here to connect to server
-const socket = io('http://192.168.0.16:9876')
+// Update IP address here to connect to server, IP will differ between each internet connection
+const socket = io('http://10.0.0.169:9876')
 
 socket.on('cameramove', function (objReceived) {
   // o.view is the view matrix from the remote control
   // viewMatrix is our local view matrix
 
-  // console.log('obj received :', objReceived.viewMatrix, objReceived.view)
   mat4.copy(viewMatrix, objReceived.view)
   // gl-matrix.net
 })
-
-//CREATE new socket.on
 
 // import the shader from external files
 // we are going to use different shader here because the 3D model doesn't have 'color' attributes
@@ -29,7 +21,7 @@ socket.on('cameramove', function (objReceived) {
 var vertStr = require('./shaders/vertex02.js')
 var fragStr = require('./shaders/fragment02.js')
 
-// import the loadObj tool
+// import the loadObj tool - see line 100 in 'frontend'
 var loadObj = require('./utils/loadObj.js')
 
 // create the projection matrix for field of view
@@ -47,25 +39,27 @@ var center = [0, 0, 0]
 var up = [0, 1, 0]
 mat4.lookAt(viewMatrix, eye, center, up)
 
-//storing 'click' information (mouse x & mouse y)
+//storing 'click' information (mouse x & mouse y) for when creating the 'click' event
 var clickedX = 0;
 var clickedY = 0;
 
 var clear = () => {
   regl.clear({
-    color: [.125, .376, .309, 1] // white
+    color: [.341, .486, .541, 1] // sets the background colour
   })
 }
 
+//creating variables
 var currTime = 0
-var r = 0.5
+var r = 0.7
 var mouseX = 0
 var mouseY = 0
 var seed = Math.random () * 1000
 var foldingStrength = 0.0
 var targetFoldingValue = 0.0
 
-// create mapping function to map the mouse position to camera position
+// this section creates the mapping function to map the mouse position to camera position
+//the function 'map' will be used later when creating a click event (see line 76)
 function map (value, start, end, newStart, newEnd) {
   var percent = (value - start) / (end - start)
   if (percent < 0) {
@@ -77,10 +71,14 @@ function map (value, start, end, newStart, newEnd) {
   var newValue = newStart + (newEnd - newStart) * percent
   return newValue
 }
-//generate a new seed 'new fold'
+//this is the code to generate a new seed 'new fold'
 //listens to server for the 'click' control sent from the remote
 socket.on('click', function (event) {
   console.log(event)
+  //the following if/else statement structures when the 'folding' occurs. 
+  //When the event is 'clicked' (1.0), the model will generate a pattern of 'random' folds as mapped onto the model
+  //When the event is 'clicked' (0.0), the model will resume back its original state.
+  //The if/else statement sets the instructions for when the paper 'folds.'
   if (targetFoldingValue == 0.0){ 
     targetFoldingValue= 1.0
     seed = Math.random () * 1000
@@ -93,31 +91,30 @@ socket.on('click', function (event) {
 })
 
 // create event listener for mouse move event in order to get mouse position
-
 window.addEventListener('mousemove', function (event) {
   var x = event.clientX // get the mosue position from the event
   var y = event.clientY
-
+//FOLLOW UP ON THIS
   mouseX = map(x, 0, window.innerWidth, -5, 5)
   mouseY = -map(y, 0, window.innerHeight, -5, 5)
 })
 
 // create a variable for draw call
-var drawCube
+var drawPaper
 
-// instead of creating the attributes ourselves, now loading the 3d model instead
+// instead of creating the attributes, this loads the 3D model (C4D file) 
 loadObj('./assets/plane1.obj', function (obj) {
   console.log('Model Loaded', obj)
 
-  // create attributes
+  // create attributes, CLARIFY
   const attributes = {
     aPosition: regl.buffer(obj.positions),
     aUV: regl.buffer(obj.uvs)
   }
 
-  // create the draw call and assign to the drawCube variable that we created
-  // so we can call the drawCube in the render function
-  drawCube = regl({
+  // create the draw call and assign to the drawPaper, variables that has been created
+  // Call the drawPaper in the render function
+  drawPaper = regl({
     uniforms: {
       uTime: regl.prop('time'),
       uProjectionMatrix: regl.prop('projection'),
@@ -150,7 +147,7 @@ loadObj('./assets/plane1.obj', function (obj) {
   clear()
 
   // 3d model takes time to load, therefore check if drawCube is exist first before calling it
-  if (drawCube !== undefined) {
+  if (drawPaper !== undefined) {
     // create an object for uniform
     var obj = {
       time: currTime,
@@ -163,6 +160,6 @@ loadObj('./assets/plane1.obj', function (obj) {
     }
 
     // draw the cube, don't forget the pass the obj in for uniform
-    drawCube(obj)
+    drawPaper(obj)
   }
 })
