@@ -5,10 +5,10 @@ var mat4 = glm.mat4
 const io = require('socket.io-client')
 
 // Update IP address here to connect to server, IP will differ between each internet connection
-const socket = io('http://10.0.0.169:9876')
+const socket = io('http://10.93.1.150:9876')
 
 socket.on('cameramove', function (objReceived) {
-  // o.view is the view matrix from the remote control
+  // objReceived.view is the view matrix from the remote control
   // viewMatrix is our local view matrix
 
   mat4.copy(viewMatrix, objReceived.view)
@@ -16,12 +16,12 @@ socket.on('cameramove', function (objReceived) {
 })
 
 // import the shader from external files
-// we are going to use different shader here because the 3D model doesn't have 'color' attributes
-// we are going to use the 'uv' attribute instead
+// this variable uses a different shader here because the 3D model
+// doesn't have 'color' attributes, its color is described by the fragment shader instead
 var vertStr = require('./shaders/vertex02.js')
 var fragStr = require('./shaders/fragment02.js')
 
-// import the loadObj tool - see line 100 in 'frontend'
+// import the loadObj tool, so that the plane object can be loaded
 var loadObj = require('./utils/loadObj.js')
 
 // create the projection matrix for field of view
@@ -39,7 +39,7 @@ var center = [0, 0, 0]
 var up = [0, 1, 0]
 mat4.lookAt(viewMatrix, eye, center, up)
 
-//storing 'click' information (mouse x & mouse y) for when creating the 'click' event
+//storing 'click' information (mouse x & mouse y) for when the 'click' event is received
 var clickedX = 0;
 var clickedY = 0;
 
@@ -51,15 +51,12 @@ var clear = () => {
 
 //creating variables
 var currTime = 0
-var r = 0.7
-var mouseX = 0
-var mouseY = 0
-var seed = Math.random () * 1000
-var foldingStrength = 0.0
-var targetFoldingValue = 0.0
+var seed = Math.random() * 1000 // creates random number between 0 and 1000
+var foldingStrength = 0.0 //this variable is passed in the vertext shader as a uniform to determine the 'crispness' of the paper fold
+var targetFoldingValue = 0.0 //this variable is used to determine how "folded" the paper is, either 0 (not folded) or 1 (moving towards being folded)
 
-// this section creates the mapping function to map the mouse position to camera position
-//the function 'map' will be used later when creating a click event (see line 76)
+// this function is used for mapping the remote mouse position to camera position
+//the function 'map' will be used later when receiving a click event
 function map (value, start, end, newStart, newEnd) {
   var percent = (value - start) / (end - start)
   if (percent < 0) {
@@ -77,26 +74,17 @@ socket.on('click', function (event) {
   console.log(event)
   //the following if/else statement structures when the 'folding' occurs. 
   //When the event is 'clicked' (1.0), the model will generate a pattern of 'random' folds as mapped onto the model
-  //When the event is 'clicked' (0.0), the model will resume back its original state.
+  //When the event is 'clicked' (0.0), the model will revert back to its original state.
   //The if/else statement sets the instructions for when the paper 'folds.'
   if (targetFoldingValue == 0.0){ 
-    targetFoldingValue= 1.0
+    targetFoldingValue = 1.0
     seed = Math.random () * 1000
     clickedX = map (event.x, 0, 1, -2, 2) 
     clickedY = map (event.y, 0, 1, 2, -2)
   } else {
     targetFoldingValue = 0.0
   }
-    console.log('New seed :', seed)
-})
-
-// create event listener for mouse move event in order to get mouse position
-window.addEventListener('mousemove', function (event) {
-  var x = event.clientX // get the mosue position from the event
-  var y = event.clientY
-//FOLLOW UP ON THIS
-  mouseX = map(x, 0, window.innerWidth, -5, 5)
-  mouseY = -map(y, 0, window.innerHeight, -5, 5)
+  console.log('New seed :', seed)
 })
 
 // create a variable for draw call
@@ -106,14 +94,17 @@ var drawPaper
 loadObj('./assets/plane1.obj', function (obj) {
   console.log('Model Loaded', obj)
 
-  // create attributes, CLARIFY
+  // create attributes, to be passed to the vertex shader
   const attributes = {
     aPosition: regl.buffer(obj.positions),
     aUV: regl.buffer(obj.uvs)
   }
 
-  // create the draw call and assign to the drawPaper, variables that has been created
-  // Call the drawPaper in the render function
+  // define how the paper is drawn
+  // gives the vertex shader uniforms, attributes, shaders, 
+  // and other information through the regl function
+  // regl.prop('...') connects the vertex shader uniforms with
+  // the javascript code in regl.frame
   drawPaper = regl({
     uniforms: {
       uTime: regl.prop('time'),
@@ -127,28 +118,25 @@ loadObj('./assets/plane1.obj', function (obj) {
     vert: vertStr,
     frag: fragStr,
     attributes: attributes,
-    count: obj.count // don't forget to use obj.count as count
+    count: obj.count
   })
 })
 
-//function render () {
-
-  regl.frame(({time}) => {
-    regl.clear({
-      color: [1, 1, 1, 1]
-    })
+// regl.frame continuously calls the draw function 
+// at a rate that keeps the animation constant and smooth 
+regl.frame(({time}) => {
+  // clear the background
+  clear()
     
   currTime += 0.01
 
-  //increase the folding strength each fold
+  // COME BACK TO THIS
   foldingStrength = foldingStrength + (targetFoldingValue - foldingStrength) * 0.05
 
-  // clear the background
-  clear()
-
-  // 3d model takes time to load, therefore check if drawCube is exist first before calling it
+  // the 3d model takes time to load, therefore this checks if drawPaper exists first before calling it
   if (drawPaper !== undefined) {
-    // create an object for uniform
+
+    // create an object for uniforms
     var obj = {
       time: currTime,
       projection: projectionMatrix,
@@ -159,7 +147,7 @@ loadObj('./assets/plane1.obj', function (obj) {
       foldingStrength: foldingStrength
     }
 
-    // draw the cube, don't forget the pass the obj in for uniform
+    // draw the papers, which then passes the object in as the uniforms
     drawPaper(obj)
   }
 })

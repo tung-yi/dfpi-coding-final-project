@@ -12,7 +12,7 @@ uniform vec3 uTouch;
 //these two new uniforms have been create to be able to 'fold' the paper
 //the uSeed uniform allows for random 'folds' to be generate each time it is clicked as defined in the frontend
 uniform float uSeed;
-//the uFoldingStrength uniform determines for the 'crispness' of the fold 
+//the uFoldingStrength uniform determines the 'crispness' of the fold 
 uniform float uFoldingStrength;
 
 // setup the uniform for time
@@ -111,23 +111,24 @@ float map(float value, float start, float end, float newStart, float newEnd) {
   return newValue;
 } 
 
+//this is where the vertex shader starts running 
 void main() {
   vec3 pos = aPosition;
 
-// this is where adjustments to the shape of the "paper" can be "folded"
+  // this is where the noise function randomizes the shape of the "paper" that is "folded"
   float noiseScale = 0.6;
   float noiseX = cnoise(pos.xyz * (noiseScale * 1.2) + uSeed); 
   float noiseY = cnoise(pos.yzx * (noiseScale * 1.2) + uSeed);
   float noiseZ = cnoise(pos.zxy * (noiseScale * 2.5) + uSeed);
   
-//help determine 'sharpness' of fold 
+  // determines the 'sharpness' of the fold through the z-axis
   noiseZ = map(noiseZ, -1.0, 4.0, 0.0, 1.5); 
   noiseZ = smoothstep(0.5, 1.5, noiseZ); 
 
-  //determines the distance between the grid vectors to where the user touches the screen
+  // determines the distance between the grid vectors relative to where the user touches the screen in the remote
   float distToTouch = distance(uTouch, pos);
 
-  // add the translate to the position
+  // adds the translation to the position
   pos += vec3(noiseX, noiseY, noiseZ) * uFoldingStrength;
   pos.z += distToTouch * 0.25 * uFoldingStrength;
  
